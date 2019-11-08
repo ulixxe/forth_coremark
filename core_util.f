@@ -1,14 +1,24 @@
+\ ee_u8  -> char
+\ ee_s16 -> n
+\ ee_u16 -> u
+\ ee_s32 -> d
+\ ee_u32 -> ud
 
 : array_s32  ( u "<spaces>name" -- )
    create 2* cells allot  \ s32 is double cell data
   does>  ( u -- d )  \ '1' is the first element
    swap 1- 2* cells + 2@ ;
+: (array_s32_set)  ( d n a-addr -- )
+   swap  ( a-addr n )
+   1- 2* cells + 2! ;
+: array_s32_set  ( d n "<spaces>name" -- )
+   ' >body (array_s32_set) ;
 : array_s32_init  ( d1 ... dn n "<spaces>name" -- )
-   ' >body swap  ( a-addr n )
-   1- 2* cells over +
-   do
-      i 2!
-   #-2 cells +loop ;
+   ' >body >r
+   1 swap do
+      i j (array_s32_set)
+   #-1 +loop
+   r> drop ;
       
 
 \ Function: get_seed

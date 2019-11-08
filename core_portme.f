@@ -1,21 +1,39 @@
+\ ee_u8  -> char
+\ ee_s16 -> n
+\ ee_u16 -> u
+\ ee_s32 -> d
+\ ee_u32 -> ud
+
+VALIDATION_RUN PERFORMANCE_RUN or PROFILE_RUN or invert [if]
+   TOTAL_DATA_SIZE #1200 = [if]
+      true to PROFILE_RUN
+   [else]
+      TOTAL_DATA_SIZE #2000 = [if]
+         true to PERFORMANCE_RUN
+      [else]
+         true to VALIDATION_RUN
+      [then]
+   [then]
+[then]
+      
 
 VALIDATION_RUN [if]
-   $15 $34  \ seed1 = 0x3415
-   $15 $34  \ seed2 = 0x3415
-   $66 $00  \ seed3 = 0x0066
+   $3415 $0000  \ seed1 = 0x3415
+   $3415 $0000  \ seed2 = 0x3415
+   $0066 $0000  \ seed3 = 0x0066
 [then]
 PERFORMANCE_RUN [if]
-   $00 $00  \ seed1 = 0x0000
-   $00 $00  \ seed2 = 0x0000
-   $66 $00  \ seed3 = 0x0066
+   $0000 $0000  \ seed1 = 0x0000
+   $0000 $0000  \ seed2 = 0x0000
+   $0066 $0000  \ seed3 = 0x0066
 [then]
 PROFILE_RUN [if]
-   $08 $00  \ seed1 = 0x0008
-   $08 $00  \ seed2 = 0x0008
-   $08 $00  \ seed3 = 0x0008
+   $0008 $0000  \ seed1 = 0x0008
+   $0008 $0000  \ seed2 = 0x0008
+   $0008 $0000  \ seed3 = 0x0008
 [then]
-$00 $00  \ seed4 = 0x0000  ITERATIONS
-$00 $00  \ seed5 = 0x0000
+$0000 $0000  \ seed4 = 0x0000  ITERATIONS
+$0000 $0000  \ seed5 = 0x0000
 #5 array_s32_init get_seed_32
 
 2variable start_time_var
