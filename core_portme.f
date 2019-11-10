@@ -34,7 +34,7 @@ PROFILE_RUN [if]
 [then]
 $0000 $0000  \ seed4 = 0x0000  ITERATIONS
 $0000 $0000  \ seed5 = 0x0000
-#5 array_s32_init get_seed_32
+2array_init get_seed_32
 
 2variable start_time_var
 2variable stop_time_var

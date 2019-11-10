@@ -4,26 +4,56 @@
 \ ee_s32 -> d
 \ ee_u32 -> ud
 
-: array_s32  ( u "<spaces>name" -- )
-   create 2* cells allot  \ s32 is double cell data
-  does>  ( u -- d )  \ '1' is the first element
-   swap 1- 2* cells + 2@ ;
-: (array_s32_set)  ( d n a-addr -- )
-   swap  ( a-addr n )
-   1- 2* cells + 2! ;
-: array_s32_set  ( d n "<spaces>name" -- )
-   ' >body (array_s32_set) ;
-: array_s32_init  ( d1 ... dn n "<spaces>name" -- )
-   ' >body >r
-   1 swap do
-      i j (array_s32_set)
+: (array)  ( u a-addr1 -- a-addr2 )
+   over over @ u< invert abort" Out of bound!"
+   swap 1+ cells + ;
+: array  ( u "<spaces>name" -- )
+   create
+   dup ,
+   cells allot  \ double cell data
+  does>  ( u -- x )  \ '0' is the first element
+   (array) @ ;
+: array_set  ( x u a-addr -- )
+   (array) ! ;
+: array_to  ( x u "<spaces>name" -- )
+   ' >body array_set ;
+: array_init  ( x0 ... xn "<spaces>name" -- )
+   ' >body dup >r
+   @ 1- 0 swap do
+      i j array_set
    #-1 +loop
    r> drop ;
-      
+
+: (2array)  ( u a-addr1 -- a-addr2 )
+   over over @ u< invert abort" Out of bound!"
+   swap 2* 1+ cells + ;
+: 2array  ( u "<spaces>name" -- )
+   create
+   dup ,
+   2* cells allot  \ double cell data
+  does>  ( u -- x1 x2 )  \ '0' is the first element
+   (2array) 2@ ;
+: 2array_set  ( x1 x2 u a-addr -- )
+   (2array) 2! ;
+: 2array_to  ( x1 x2 u "<spaces>name" -- )
+   ' >body 2array_set ;
+: 2array_init  ( x10 x20 ... x1n x2n "<spaces>name" -- )
+   ' >body dup >r
+   @ 1- 0 swap do
+      i j 2array_set
+   #-1 +loop
+   r> drop ;
+
+: 2value  ( x1 x2 "<spaces>name" -- )
+   create , ,
+  does>  ( -- x1 x2 )
+   2@ ;
+: 2to  ( x1 x2 "<spaces>name" -- )
+   ' >body 2! ;
 
 \ Function: get_seed
 \	Get a values that cannot be determined at compile time.
-#5 array_s32 get_seed_32  \ ee_s32 get_seed_32(int i)
+#5 2array get_seed_32  \ ee_s32 get_seed_32(int i)
 
 
 \ Function: crc*
