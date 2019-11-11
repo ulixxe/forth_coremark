@@ -103,4 +103,4 @@ memblock dup dup list_blksize + dup matrix_blksize + array_init memblock_addr
 
 
 
-\ s" ./core_list_join.f" included
+s" ./core_list_join.f" included
