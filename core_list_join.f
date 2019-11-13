@@ -1,9 +1,46 @@
+: dataregen  ( a-addr -- )  \ &data
+   cell+
+   dup @  ( data16 )
+   $FF00 and
+   dup #8 rshift $00FF and
+   or swap ! ;
 
-: copy_info  ( a-addr1 a-addr2 -- )  \ void copy_info(list_data *to,list_data *from)
-   over cell+ over cell+ @ swap !
-   @ swap ! ;
+: cmp_idx_dr  ( a-addr1 a-addr2 -- n )  \ &elem_a &elem_b
+   cell+ @
+   dup dataregen
+   swap cell+ @
+   dup dataregen
+   @ swap @ - ;
 
-: core_list_insert_new  ( a-addr1 a-addr2 -- )
+: cmp_idx  ( a-addr1 a-addr2 -- n )  \ &elem_a &elem_b
+   cell+ @
+   swap cell+ @
+   @ swap @ - ;
+
+: mergesort  ( a-addr1 a-addr2 a-addr3 xt -- a-addr4 )  \ &tail p q cmp
+   \ p is <> 0
+   r>  \ &tail p q
+   begin
+      dup if
+         over if
+            2dup r@ execute
+            0> if
+            else
+               swap
+            then
+         then
+      else
+         over if
+            swap
+         else
+            2drop r> drop exit
+         then
+      then
+      rot over swap ! tuck @
+   again ;
+
+: list_mergesort  ( a-addr1 xt -- a-addr2 )  \ &elem &cmp
+   
 ;
 
 : data!  ( u1 u2 a-addr -- )  \ idx data16 &elem
