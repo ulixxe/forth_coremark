@@ -101,6 +101,9 @@ create memblock 0 memblock_size allot
 #4 array memblock_addr
 memblock dup dup list_blksize + dup matrix_blksize + array_init memblock_addr
 
-
+variable list_head
 
 s" ./core_list_join.f" included
+
+1 memblock_size 1 memblock_addr seed1
+core_list_init

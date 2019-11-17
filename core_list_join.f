@@ -19,7 +19,7 @@
 
 : mergesort  ( a-addr1 a-addr2 a-addr3 xt -- a-addr4 )  \ &tail p q cmp
    \ p is <> 0
-   r>  \ &tail p q
+   >r  \ &tail p q
    begin
       dup if
          over if
@@ -39,9 +39,42 @@
       rot over swap ! tuck @
    again ;
 
-: list_mergesort  ( a-addr1 xt -- a-addr2 )  \ &elem &cmp
-   
-;
+: split  ( a-addr1 u -- a-addr2 )
+   \ split first u elements from list by
+   \ putting 0 on next of last element
+   \ and returns next element
+   over swap
+   0 do  ( an-1 an )
+      nip
+      dup if
+         dup @
+      else
+         unloop exit
+      then
+   loop
+   0 rot ! ;
+
+: list_mergesort  ( a-addr1 xt -- )  \ &head &cmp
+   >r dup 1
+   begin  ( &head &tail insize )
+      0 rot rot
+      over @ swap
+      begin  ( nmerges &tail &next insize )
+         2dup split
+         2dup swap split
+         r@ swap >r rot >r  ( R: xt &next insize )
+         mergesort  ( nmerges &tail )
+         swap 1+ swap
+         r> r>
+         dup
+      while
+            swap
+      repeat
+      drop nip  ( nmerges insize )
+      over #2 < if r> 2drop 2drop exit then
+      2*  \ insize * 2
+      nip over swap
+   again ;
 
 : data!  ( u1 u2 a-addr -- )  \ idx data16 &elem
    cell+ @
@@ -104,4 +137,6 @@
    repeat
    2drop
    r> r> 2drop
+   list_head !
+   list_head ['] cmp_idx_dr list_mergesort
 ;
