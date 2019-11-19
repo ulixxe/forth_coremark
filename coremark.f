@@ -19,16 +19,6 @@ false value PROFILE_RUN
 s" ./core_util.f" included
 s" ./core_portme.f" included
 
-\ calculate matrix dimension to fit in allotted memory size
-: matrix_size  ( u1 -- u2 )
-   0
-   begin  ( blksize i )
-      1+ over
-      over dup * 2 * 4 *  ( blksize j )
-      > while
-   repeat
-   1- nip ;
-
 #5 array list_known_crc
 $d4b0 $3340 $6a79 $e714 $e3c1 array_init list_known_crc
 #5 array matrix_known_crc
@@ -49,61 +39,87 @@ $7 constant ALL_ALGORITHMS_MASK
 4 get_seed_32 d>s value execs
 0 value err
 
-0 value #algorithms
-0 value list_elems
-0 value list_blksize
-0 value N
-0 value matrix_blksize
-0 value state_blksize
+: list_elems  ( u1 -- u2 )
+   \	ee_u32 per_item=16+sizeof(struct list_data_s);
+   #16 #2 #2 + +  \ per_list_item
 
-: init  ( -- )
-   execs 0= if ALL_ALGORITHMS_MASK to execs then
+   \ #list elements = (TOTAL_DATA_SIZE/num_algorithms/per_item)-2
+   \   where per_item = 16+sizeof(struct list_data_s)
+   \     here per_item = 2 * cell + 2 * cell = 4 cells
+
+   \ TOTAL_LIST_DATA_SIZE = #list elements * 4 cells
+
+   / 2 - ;  \ #list elements
+
+\ calculate matrix dimension to fit in allotted memory size
+: matrix_size  ( u1 -- u2 )
+   0
+   begin  ( blksize i )
+      1+ over
+      over dup * 2 * 4 *  ( blksize j )
+      > while
+   repeat
+   1- nip ;
+
+: matrix_blksize  ( u1 -- u2 )  \ N
+   dup * 4 * cells ;
+
+: blksizes  ( u1 -- u2 u3 u4 )  \ execs  -- list matrix state
+   dup 0= if drop ALL_ALGORITHMS_MASK then
    0
    NUM_ALGORITHMS 0 do
-      1 i lshift execs and if 1+ then
+      over 1 i lshift and if 1+ then
    loop
-   to #algorithms
 
-   TOTAL_DATA_SIZE #algorithms /  \ data size allocated for each algorithm
+   TOTAL_DATA_SIZE swap /  \ data size allocated for each algorithm
 
-   execs ID_LIST and if
-      dup
-      \	ee_u32 per_item=16+sizeof(struct list_data_s);
-      #16 #2 #2 + +  \ per_list_item
-
-      \ #list elements = (TOTAL_DATA_SIZE/num_algorithms/per_item)-2
-      \   where per_item = 16+sizeof(struct list_data_s)
-      \     here per_item = 2 * cell + 2 * cell = 4 cells
-
-      \ TOTAL_LIST_DATA_SIZE = #list elements * 4 cells
-
-      / 2 - to list_elems \ #list elements
-      list_elems 4 * cells to list_blksize
+   over ID_STATE and if
+      dup  \ state mem size
+   else
+      0
    then
-
-   execs ID_MATRIX and if
-      dup matrix_size to N
-      N dup * 4 * cells to matrix_blksize
+   >r
+   over ID_MATRIX and if
+      dup matrix_size  \ N
+   else
+      0
    then
-
-   execs ID_STATE and if
-      dup to state_blksize
+   >r
+   swap ID_LIST and if
+      list_elems
+      4 * cells  \ list mem size
+   else
+      0
    then
-   drop
-;
+   r> r> ;
 
-init
+execs blksizes
 
-#4 array memblock_size
-list_blksize matrix_blksize + state_blksize +
-list_blksize matrix_blksize state_blksize array_init memblock_size
-create memblock 0 memblock_size allot
-#4 array memblock_addr
-memblock dup dup list_blksize + dup matrix_blksize + array_init memblock_addr
-
-variable list_head
+rot  \ matrix_size state_size list_size
 
 s" ./core_list_join.f" included
 
-1 memblock_size 1 memblock_addr seed1
-core_list_init
+create list_head
+dup cell+ allot  \ reserve memory for list head and list data
+list_head seed1 core_list_init
+
+swap  \ state_size matrix_size
+
+s" ./core_matrix.f" included
+
+create matrix_data
+dup matrix_blksize 4 cells + allot
+matrix_data seed1 core_init_matrix
+
+
+: debug  ( -- )
+   cr list_head .list cr
+   cr ." Matrix A:"
+   matrix_data @
+   matrix_data cell+ @
+   cr .matrix
+   cr ." Matrix B:"
+   matrix_data @
+   matrix_data cell+ cell+ @
+   cr .matrix
+;

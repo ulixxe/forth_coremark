@@ -1,3 +1,5 @@
+
+\ re-generate data16 = (data16 & 0xFF00) | (data16>>8 & 0x00FF)
 : dataregen  ( a-addr -- )  \ &data
    cell+
    dup @  ( data16 )
@@ -5,6 +7,7 @@
    dup #8 rshift $00FF and
    or swap ! ;
 
+\ compare idx and re-generate data16
 : cmp_idx_dr  ( a-addr1 a-addr2 -- n )  \ &elem_a &elem_b
    cell+ @
    dup dataregen
@@ -12,6 +15,7 @@
    dup dataregen
    @ swap @ - ;
 
+\ compare idx
 : cmp_idx  ( a-addr1 a-addr2 -- n )  \ &elem_a &elem_b
    cell+ @
    swap cell+ @
@@ -39,10 +43,10 @@
       rot over swap ! tuck @
    again ;
 
+\ split first u elements from list by
+\ putting 0 on last element next
+\ and returns following element
 : split  ( a-addr1 u -- a-addr2 )
-   \ split first u elements from list by
-   \ putting 0 on next of last element
-   \ and returns next element
    over swap
    0 do  ( an-1 an )
       nip
@@ -54,6 +58,14 @@
    loop
    0 rot ! ;
 
+\ Sort the list in place without recursion.
+\   Use mergesort, as for linked list this is a realistic solution. 
+\   Also, since this is aimed at embedded, care was taken to use iterative rather then recursive algorithm.
+\   The sort can either return the list to original order (by idx),
+\   or use the data item to invoke other other algorithms and change the order of the list.
+\   Parameters:
+\   list - list to be sorted.
+\   cmp - cmp function to use
 : list_mergesort  ( a-addr1 xt -- )  \ &head &cmp
    >r dup 1
    begin  ( &head &tail insize )
@@ -101,8 +113,16 @@
    over @ over !  \ newtail_elem->next= elem->next
    swap ! ;  \ elem->next=&newend_elem
 
-: core_list_init  ( u1 a-addr1 u2 -- a-addr2 )  \ list_head *core_list_init(ee_u32 blksize, list_head *memblock, ee_s16 seed)
+\ list_head *core_list_init(ee_u32 blksize, list_head *memblock, ee_s16 seed)
+\   Initialize list with data.
+\   Parameters:
+\     blksize - Size of memory to be initialized.
+\     memblock - Pointer to memory block.
+\     seed -  Actual values chosen depend on the seed parameter.
+: core_list_init  ( u1 a-addr u2 -- )
+   over >r  \ save list head
    >r  \ blksize memblock R: seed
+   cell+  \ skip list head
    over swap  \ blksize blksize memblock
    $0 over !  \ list->next=NULL
    over 2/ over + over cell+ !  \ list->info=datablock
@@ -137,6 +157,21 @@
    repeat
    2drop
    r> r> 2drop
-   list_head !
-   list_head ['] cmp_idx_dr list_mergesort
-;
+   r@ !
+   r> ['] cmp_idx_dr list_mergesort ;
+
+\ Print list
+: .list  ( a-addr -- )
+   base @ swap hex
+   begin
+      @ dup
+   while
+         dup cell+ @
+         ." ["
+         dup @ $FFFF and 0 <# # # # # #> type
+         ." ,"
+         cell+ @ $FFFF and 0 <# # # # # #> type
+         ." ]"
+   repeat
+   drop
+   base ! ;
