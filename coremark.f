@@ -111,6 +111,12 @@ create matrix_data
 dup matrix_blksize 4 cells + allot
 matrix_data seed1 core_init_matrix
 
+s" ./core_state.f" included
+
+create state_data
+dup cell+ allot
+state_data seed1 core_init_state
+
 
 : debug  ( -- )
    cr list_head .list cr
@@ -122,4 +128,8 @@ matrix_data seed1 core_init_matrix
    matrix_data @
    matrix_data cell+ cell+ @
    cr .matrix
+   cr ." State Input:"
+   state_data cell+
+   state_data @
+   cr type
 ;
