@@ -175,3 +175,64 @@
    repeat
    drop
    base ! ;
+
+: core_list_find_idx  ( x a-addr1 -- a-addr2|0 )
+   begin
+      @ dup if
+         2dup cell+ @ @
+         = if nip exit then
+      else
+         nip exit
+      then
+   again ;
+
+: core_list_find_data16  ( x a-addr1 -- a-addr2|0 )
+   begin
+      @ dup if
+         2dup cell+ @ cell+ @
+         $00FF and
+         = if nip exit then
+      else
+         nip exit
+      then
+   again ;
+
+: core_list_find  ( n1 n2 a-addr1 -- a-addr2|0 )
+   ( data16 idx &head )
+   over 0< if
+      nip
+      core_list_find_data16
+   else
+      core_list_find_idx
+      nip
+   then ;
+
+: core_list_reverse  ( a-addr -- )
+   0 over @
+   begin  ( a-addr a-addr0 a-addr1 )
+      dup if
+         dup @ >r
+         swap over !
+         r>
+      else
+         drop swap !
+         exit
+      then
+   again ;
+
+: core_list_remove  ( a-addr1 -- a-addr2 )
+   dup @  ( a-addr1 a-addr2 )
+   over cell+ over cell+
+   dup @ >r
+   over @ swap !
+   r> swap !
+   tuck @ swap !
+   0 over ! ;
+
+: core_list_undo_remove  ( a-addr1 a-addr2 -- )
+   over cell+ over cell+
+   dup @ >r
+   over @ swap !
+   r> swap !
+   over @ over !
+   swap ! ;

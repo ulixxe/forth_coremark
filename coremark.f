@@ -117,17 +117,30 @@ create state_data
 dup cell+ allot
 state_data seed1 core_init_state
 
-
+: n  ( -- u )
+   matrix_data @ ;
+: a  ( -- a-addr )
+   matrix_data cell+ @ ;
+: b  ( -- a-addr )
+   matrix_data cell+ cell+ @ ;
+: c  ( -- a-addr )
+   matrix_data cell+ cell+ cell+ @ ;
+: a.matrix  ( -- )
+   cr ." Matrix A:"
+   n a
+   cr s16.matrix ;
+: b.matrix  ( -- )
+   cr ." Matrix B:"
+   n b
+   cr s16.matrix ;
+: c.matrix  ( -- )
+   cr ." Matrix C:"
+   n c
+   cr s32.matrix ;
 : debug  ( -- )
    cr list_head .list cr
-   cr ." Matrix A:"
-   matrix_data @
-   matrix_data cell+ @
-   cr .matrix
-   cr ." Matrix B:"
-   matrix_data @
-   matrix_data cell+ cell+ @
-   cr .matrix
+   a.matrix
+   b.matrix
    cr ." State Input:"
    state_data cell+
    state_data @
