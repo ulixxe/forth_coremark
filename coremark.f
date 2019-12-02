@@ -118,13 +118,13 @@ dup cell+ allot
 state_data seed1 core_init_state
 
 : n  ( -- u )
-   matrix_data @ ;
+   matrix_data p->n ;
 : a  ( -- a-addr )
-   matrix_data cell+ @ ;
+   matrix_data p->a ;
 : b  ( -- a-addr )
-   matrix_data cell+ cell+ @ ;
+   matrix_data p->b ;
 : c  ( -- a-addr )
-   matrix_data cell+ cell+ cell+ @ ;
+   matrix_data p->c ;
 : a.matrix  ( -- )
    cr ." Matrix A:"
    n a
