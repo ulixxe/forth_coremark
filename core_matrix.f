@@ -10,7 +10,7 @@
    loop
    drop ;
 
-\  	Initialize the memory block for matrix benchmarking.
+\  	Initialize the memory block for matrix benchmarking: blksize &memblk seed
 \   Parameters:
 \     blksize - Size of memory to be initialized.
 \     memblk - Pointer to memory block.
