@@ -234,10 +234,11 @@ create track_counts  NUM_CORE_STATES cells allot  \ no need for ee_u32, ee_u16 i
          cells final_counts +
          dup @ 1+ swap !
    repeat
+   2drop
    swap $FF and r@ swap >r
-   dup cell+ swap @ over +  \ step &memblock &memblock+blksize
+   dup cell+ swap @ over +  \ step &str &str+blksize
    >r
-   begin  \ step &memblock R: &memblock+blksize seed1
+   begin  \ step &str R: seed1 &str+blksize
       dup r@ u<
    while
          dup c@ [char] ,
@@ -257,10 +258,11 @@ create track_counts  NUM_CORE_STATES cells allot  \ no need for ee_u32, ee_u16 i
          cells final_counts +
          dup @ 1+ swap !
    repeat
+   2drop
    swap $FF and r@ swap >r
-   dup cell+ swap @ over +  \ step &memblock &memblock+blksize
+   dup cell+ swap @ over +  \ step &str &str+blksize
    >r
-   begin  \ step &memblock R: &memblock+blksize seed2
+   begin  \ step &str R: seed2 &str+blksize
       dup r@ u<
    while
          dup c@ [char] ,
