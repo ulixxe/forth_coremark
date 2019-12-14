@@ -32,12 +32,21 @@ $4 constant ID_STATE
 $7 constant ALL_ALGORITHMS_MASK
 #3 constant NUM_ALGORITHMS
 
-0 get_seed_32 d>s value seed1
-1 get_seed_32 d>s value seed2
-2 get_seed_32 d>s value seed3
-3 get_seed_32 2value iterations
-4 get_seed_32 d>s value execs
-0 value err
+variable seed1
+variable seed2
+variable seed3
+2variable iterations
+variable execs
+variable err
+variable crc
+variable crclist
+variable crcmatrix
+variable crcstate
+0 get_seed_32 d>s seed1 !
+1 get_seed_32 d>s seed2 !
+2 get_seed_32 d>s seed3 !
+3 get_seed_32 iterations 2!
+4 get_seed_32 d>s execs !
 
 : list_elems  ( u1 -- u2 )
    \	ee_u32 per_item=16+sizeof(struct list_data_s);
@@ -93,29 +102,22 @@ $7 constant ALL_ALGORITHMS_MASK
    then
    r> r> ;
 
-execs blksizes
+execs @ blksizes  \ list_size matrix_size state_size
 
-rot  \ matrix_size state_size list_size
+s" ./core_state.f" included
+create state_data
+dup cell+ allot
+state_data seed1 @ core_init_state
 
-s" ./core_list_join.f" included
+s" ./core_matrix.f" included
+create matrix_data
+dup matrix_blksize 4 cells + allot
+matrix_data seed1 @ core_init_matrix
 
 create list_head
 dup cell+ allot  \ reserve memory for list head and list data
-list_head seed1 core_list_init
-
-swap  \ state_size matrix_size
-
-s" ./core_matrix.f" included
-
-create matrix_data
-dup matrix_blksize 4 cells + allot
-matrix_data seed1 core_init_matrix
-
-s" ./core_state.f" included
-
-create state_data
-dup cell+ allot
-state_data seed1 core_init_state
+s" ./core_list_join.f" included
+list_head seed1 @ core_list_init
 
 : n  ( -- u )
    matrix_data p->n ;
@@ -146,3 +148,29 @@ state_data seed1 core_init_state
    state_data @
    cr type
 ;
+
+: iterate  ( ud -- )  \ iterations
+   0 crc !
+   0 crclist !
+   0 crcmatrix !
+   0 crcstate !
+   0 >r  \ iterations R: first
+   begin
+      1 0 d-
+      2dup d0<
+      invert
+   while
+         #1 core_bench_list
+         crc @ crcu16
+         crc !
+         #-1 core_bench_list
+         crc @ crcu16
+         crc !
+         r@ if
+         else
+            crc @ crclist !
+            r> drop
+            1 >r
+         then
+   repeat
+   r> drop 2drop ;

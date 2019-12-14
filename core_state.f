@@ -223,7 +223,7 @@ create track_counts  NUM_CORE_STATES cells allot  \ no need for ee_u32, ee_u16 i
 \ Go over the input twice, once direct, and once after introducing some corruption. 
 \ ee_u16 core_bench_state(ee_u32 blksize, ee_u8 *memblock, 
 \  	ee_s16 seed1, ee_s16 seed2, ee_s16 step, ee_u16 crc) 
-: core_bench_state  ( u1 n1 n2 n3  -- u2 )
+: core_bench_state  ( u1 n1 n2 n3 a-addr -- u2 )
    >r  \ R: &state_data
    final_counts track_counts NUM_CORE_STATES reset_counts
    track_counts r@ cell+

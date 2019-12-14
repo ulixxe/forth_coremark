@@ -81,13 +81,13 @@
 \ ee_u16 crcu8(ee_u8 data, ee_u16 crc)
 : crcu8  ( char u1 -- u2 )
    #8 #0 do
-      over over xor
+      2dup xor
       $1 and  \ carry
       if
          $4002 xor
          2/ $8000 or
       else
-         2/
+         2/ $7FFF and
       then
       swap 2/ swap  \ data >>= 1
    loop
