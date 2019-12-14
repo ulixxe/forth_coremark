@@ -29,9 +29,9 @@
 \ Initialize the input data for the state machine: size &p seed --
 \ void core_init_state(ee_u32 size, ee_s16 seed, ee_u8 *p)
 : core_init_state  ( u1 a-addr u2 -- )
-   >r
-   swap over cell+
-   swap 1-  ( a-addr c-addr u1 )
+   >r 2dup !  \ store size
+   cell+
+   swap 1-  ( c-addr u1 )
    begin  ( c-addr u1 :R seed )
       r> 1+ dup >r
       dup #3 rshift $0003 and
@@ -59,8 +59,7 @@
          r>
    repeat
    nip nip 2 +
-   over swap 0 fill  \ fill the rest with 0
-   over cell+ - swap !
+   0 fill  \ fill the rest with 0
    r> drop ;
 
 : ee_isdigit  ( char -- flag )

@@ -3,7 +3,7 @@ false value VALIDATION_RUN
 true value PERFORMANCE_RUN
 false value PROFILE_RUN
 
-#2 #1000 * constant TOTAL_DATA_SIZE
+#2000 constant TOTAL_DATA_SIZE
 
 \ list data structures
 \ typedef struct list_data_s {
@@ -42,6 +42,8 @@ variable crc
 variable crclist
 variable crcmatrix
 variable crcstate
+variable seedcrc
+variable size
 0 get_seed_32 d>s seed1 !
 1 get_seed_32 d>s seed2 !
 2 get_seed_32 d>s seed3 !
@@ -74,7 +76,10 @@ variable crcstate
    dup * 4 * cells ;
 
 : blksizes  ( u1 -- u2 u3 u4 )  \ execs  -- list matrix state
-   dup 0= if drop ALL_ALGORITHMS_MASK then
+   dup 0= if
+      drop ALL_ALGORITHMS_MASK
+      dup execs !
+   then
    0
    NUM_ALGORITHMS 0 do
       over 1 i lshift and if 1+ then
@@ -103,6 +108,7 @@ variable crcstate
    r> r> ;
 
 execs @ blksizes  \ list_size matrix_size state_size
+dup size !
 
 s" ./core_state.f" included
 create state_data
@@ -174,3 +180,111 @@ list_head seed1 @ core_list_init
          then
    repeat
    r> drop 2drop ;
+
+\ find # iterations that lasts > 10sec
+: #iterations  ( -- ud )
+   1 0  \ iterations
+   0  \ secs
+   begin
+      1 <
+   while
+         d2* d2* d2*  \ iteration *= 8
+         start_time
+         2dup iterate
+         stop_time
+         get_time time_in_secs
+   repeat
+   get_time time_in_secs
+   begin  \ iterations secs
+      >r d2* r> 2*
+      dup 10 <
+   while
+   repeat
+   drop ;
+
+: coremark  ( -- )
+   iterations 2@
+   2dup d0= if
+      2drop #iterations
+   then
+   2dup iterations 2!
+   start_time
+   iterate
+   stop_time
+   0  \ seedcrc
+   seed1 @ swap crc16
+   seed2 @ swap crc16
+   seed3 @ swap crc16
+   size @ swap crc16
+   seedcrc !
+   cr cr
+   seedcrc @
+   dup $8A02 = if
+      ." 6k performance run parameters for coremark." cr
+      #0
+   else
+      dup $7B05 = if
+         ." 6k validation run parameters for coremark." cr
+         #1
+      else
+         dup $4EAF = if
+            ." Profile generation run parameters for coremark." cr
+            #2
+         else
+            dup $E9F5 = if
+               ." 2K performance run parameters for coremark." cr
+               #3
+            else
+               dup $18F2 = if
+                  ." 2K validation run parameters for coremark." cr
+                  #4
+               else
+                  #-1
+               then
+            then
+         then
+      then
+   then
+   0 err !
+   nip dup 0<
+   invert if
+      dup list_known_crc crclist @ <>
+      execs @ ID_LIST and 0<>
+      and if
+         ." ERROR! list crc should be 0x" hex crclist @ u. decimal cr
+         err @ 1+ err !
+      then
+      dup matrix_known_crc crcmatrix @ <>
+      execs @ ID_MATRIX and 0<>
+      and if
+         ." ERROR! matrix crc should be 0x" hex crcmatrix @ u. decimal cr
+         err @ 1+ err !
+      then
+      dup state_known_crc crcstate @ <>
+      execs @ ID_STATE and 0<>
+      and if
+         ." ERROR! state crc should be 0x" hex crcstate @ u. decimal cr
+         err @ 1+ err !
+      then
+   then
+   drop
+   ." CoreMark Size    : " size @ . cr
+   ." Total ticks      : " get_time d. cr
+   ." Total time (secs): " get_time time_in_secs . cr
+   ." Iterations/Sec   : "
+   get_time time_in_secs
+   dup if
+      iterations 2@ rot um/mod nip . cr
+   else
+      drop ." -" cr
+   then
+   ." Iterations       : " iterations 2@ d. cr
+   hex
+   ." seedcrc          : 0x" seedcrc @ u. cr
+   ." crclist          : 0x" crclist @ u. cr
+   ." crcmatrix        : 0x" crcmatrix @ u. cr
+   ." crcstate         : 0x" crcstate @ u. cr
+   ." crcfinal         : 0x" crc @ u. cr
+   decimal
+   err @ if ." Errors detected" cr then
+;
