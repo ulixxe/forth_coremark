@@ -19,58 +19,26 @@
 \ #define MAIN_HAS_NORETURN 1 - platform does not support returning a value from main
 
 
-VALIDATION_RUN PERFORMANCE_RUN or PROFILE_RUN or invert [if]
-   TOTAL_DATA_SIZE #1200 = [if]
-      true to PROFILE_RUN
-   [else]
-      TOTAL_DATA_SIZE #2000 = [if]
-         true to PERFORMANCE_RUN
-      [else]
-         true to VALIDATION_RUN
-      [then]
-   [then]
-[then]
-
-\ -----------------------------
-\ From core_portme.c
-
-VALIDATION_RUN [if]
-   $3415 $0000  \ ee_s32 seed1 = 0x3415
-   $3415 $0000  \ ee_s32 seed2 = 0x3415
-   $0066 $0000  \ ee_s32 seed3 = 0x0066
-[then]
-PERFORMANCE_RUN [if]
-   $0000 $0000  \ ee_s32 seed1 = 0x0000
-   $0000 $0000  \ ee_s32 seed2 = 0x0000
-   $0066 $0000  \ ee_s32 seed3 = 0x0066
-[then]
-PROFILE_RUN [if]
-   $0008 $0000  \ ee_s32 seed1 = 0x0008
-   $0008 $0000  \ ee_s32 seed2 = 0x0008
-   $0008 $0000  \ ee_s32 seed3 = 0x0008
-[then]
-$0000 $0000  \ ee_s32 seed4 = 0x0000  ITERATIONS
-$0000 $0000  \ ee_s32 seed5 = 0x0000
-2array_init get_seed_32
-
 2variable start_time_var
 2variable stop_time_var
 
-\: d>  ( d1 d2 -- flag )  \ SwiftForth
-\   2over 2over d= >r     \ SwiftForth
-\   d< r> or invert ;     \ SwiftForth
+: d>  ( d1 d2 -- flag )  \ SwiftForth
+   2over 2over d= >r     \ SwiftForth
+   d< r> or invert ;     \ SwiftForth
 
 \	This function will be called right before starting the timed portion of the benchmark.
 \ void start_time(void)
 : start_time  ( -- )
    utime start_time_var 2! ;  \ gforth
 \   ucounter start_time_var 2! ;  \ SwiftForth
+\   (ticks) #1000 um* start_time_var 2! ;  \ Vfx
 
 \ This function will be called right after ending the timed portion of the benchmark.
 \ void stop_time(void)
 : stop_time  ( -- )
    utime stop_time_var 2! ;  \ gforth
 \   ucounter stop_time_var 2! ;  \ SwiftForth
+\   (ticks) #1000 um* stop_time_var 2! ;  \ Vfx
 
 \	Return an abstract "ticks" number that signifies time on the system.
 \ typedef ee_u32 CORE_TICKS

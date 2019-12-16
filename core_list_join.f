@@ -187,15 +187,18 @@
    dup $7FFF $FFFF rot data!
    2dup list_insert  \ &elem &end_elem
    rot 2/ 2/ cell / 3 -
-   0 do
-      list_new
-      j i xor $000F and
+   r@ swap
+   0 do  \ &elem &end_elem seed
+      dup i xor $000F and
       #3 lshift i $0007 and or
       dup #8 lshift or
-      over data16!
+      swap >r
+      swap list_new
+      tuck data16!
       2dup list_insert
+      r>
    loop
-   drop swap 2/ 2/ cell / 5 / >r  \ list R: size/5
+   2drop swap 2/ 2/ cell / 5 / >r  \ list R: size/5
    1 over
    begin
       @ dup @

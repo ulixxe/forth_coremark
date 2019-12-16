@@ -9,3 +9,11 @@ I wrote `forth_coremark` using ANS94 to allow an easy porting and optimization o
 S" coremark.f" INCLUDED
 coremark
 ~~~
+# Benchmark results
+CoreMark Iterations/Sec
+~~~
+GCC 5.5.0:                  21428
+Gforth 0.7.3:                1260
+SwiftForth i386-Linux 3.7.8: 5461
+VFX Forth for Linux 4.81:    8192
+~~~

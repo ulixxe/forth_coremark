@@ -5,6 +5,41 @@ false value PROFILE_RUN
 
 #2000 constant TOTAL_DATA_SIZE
 
+: get_seeds  ( -- u1 u2 u3 )  \ seed1 seed2 seed3
+   \ ee_s16 is enough for each seed
+   VALIDATION_RUN PERFORMANCE_RUN or PROFILE_RUN or invert if
+      TOTAL_DATA_SIZE #1200 = if
+         true to PROFILE_RUN
+      else
+         TOTAL_DATA_SIZE #2000 = if
+            true to PERFORMANCE_RUN
+         else
+            true to VALIDATION_RUN
+         then
+      then
+   then
+
+   \ -----------------------------
+   \ From core_portme.c
+
+   VALIDATION_RUN if
+      $3415  \ ee_s32 seed1
+      $3415  \ ee_s32 seed2
+      $0066  \ ee_s32 seed3
+   then
+   PERFORMANCE_RUN if
+      $0000  \ ee_s32 seed1
+      $0000  \ ee_s32 seed2
+      $0066  \ ee_s32 seed3
+   then
+   PROFILE_RUN if
+      $0008  \ ee_s32 seed1
+      $0008  \ ee_s32 seed2
+      $0008  \ ee_s32 seed3
+   then
+;
+
+
 \ list data structures
 \ typedef struct list_data_s {
 \ 	ee_s16 data16;
@@ -44,11 +79,11 @@ variable crcmatrix
 variable crcstate
 variable seedcrc
 variable size
-0 get_seed_32 d>s seed1 !
-1 get_seed_32 d>s seed2 !
-2 get_seed_32 d>s seed3 !
-3 get_seed_32 iterations 2!
-4 get_seed_32 d>s execs !
+
+get_seeds seed3 ! seed2 ! seed1 !
+
+$0000 $0000 iterations 2!  \ ee_s32 ITERATIONS
+$0000 execs !  \ ee_s16 is enough
 
 : list_elems  ( u1 -- u2 )
    \	ee_u32 per_item=16+sizeof(struct list_data_s);
@@ -112,18 +147,21 @@ dup size !
 
 s" ./core_state.f" included
 create state_data
-dup cell+ allot
-state_data seed1 @ core_init_state
+cell+ allot
 
 s" ./core_matrix.f" included
 create matrix_data
-dup matrix_blksize 4 cells + allot
-matrix_data seed1 @ core_init_matrix
+matrix_blksize 4 cells + allot
 
 create list_head
-dup cell+ allot  \ reserve memory for list head and list data
+cell+ allot  \ reserve memory for list head and list data
 s" ./core_list_join.f" included
-list_head seed1 @ core_list_init
+
+: data_init  ( -- )
+   execs @ blksizes  \ list_size matrix_size state_size
+   state_data seed1 @ core_init_state
+   matrix_data seed1 @ core_init_matrix
+   list_head seed1 @ core_list_init ;
 
 : n  ( -- u )
    matrix_data p->n ;
@@ -197,12 +235,13 @@ list_head seed1 @ core_list_init
    get_time time_in_secs
    begin  \ iterations secs
       >r d2* r> 2*
-      dup 10 <
+      dup #10 <
    while
    repeat
    drop ;
 
 : coremark  ( -- )
+   data_init
    iterations 2@
    2dup d0= if
       2drop #iterations
@@ -251,19 +290,22 @@ list_head seed1 @ core_list_init
       dup list_known_crc crclist @ <>
       execs @ ID_LIST and 0<>
       and if
-         ." ERROR! list crc should be 0x" hex crclist @ u. decimal cr
+         ." ERROR! list crc should be 0x"
+         hex dup list_known_crc u. decimal cr
          err @ 1+ err !
       then
       dup matrix_known_crc crcmatrix @ <>
       execs @ ID_MATRIX and 0<>
       and if
-         ." ERROR! matrix crc should be 0x" hex crcmatrix @ u. decimal cr
+         ." ERROR! matrix crc should be 0x"
+         hex dup matrix_known_crc u. decimal cr
          err @ 1+ err !
       then
       dup state_known_crc crcstate @ <>
       execs @ ID_STATE and 0<>
       and if
-         ." ERROR! state crc should be 0x" hex crcstate @ u. decimal cr
+         ." ERROR! state crc should be 0x"
+         hex dup state_known_crc u. decimal cr
          err @ 1+ err !
       then
    then
