@@ -56,15 +56,21 @@ $0000 $0000  \ ee_s32 seed5 = 0x0000
 2variable start_time_var
 2variable stop_time_var
 
+\: d>  ( d1 d2 -- flag )  \ SwiftForth
+\   2over 2over d= >r     \ SwiftForth
+\   d< r> or invert ;     \ SwiftForth
+
 \	This function will be called right before starting the timed portion of the benchmark.
 \ void start_time(void)
 : start_time  ( -- )
-   utime start_time_var 2! ;
+   utime start_time_var 2! ;  \ gforth
+\   ucounter start_time_var 2! ;  \ SwiftForth
 
 \ This function will be called right after ending the timed portion of the benchmark.
 \ void stop_time(void)
 : stop_time  ( -- )
-   utime stop_time_var 2! ;
+   utime stop_time_var 2! ;  \ gforth
+\   ucounter stop_time_var 2! ;  \ SwiftForth
 
 \	Return an abstract "ticks" number that signifies time on the system.
 \ typedef ee_u32 CORE_TICKS
