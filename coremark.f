@@ -86,7 +86,7 @@ $0000 $0000 iterations 2!  \ ee_s32 ITERATIONS
 $0000 execs !  \ ee_s16 is enough
 
 : list_elems  ( u1 -- u2 )
-   \	ee_u32 per_item=16+sizeof(struct list_data_s);
+   \ ee_u32 per_item=16+sizeof(struct list_data_s);
    #16 #2 #2 + +  \ per_list_item
 
    \ #list elements = (TOTAL_DATA_SIZE/num_algorithms/per_item)-2
@@ -219,18 +219,21 @@ s" ./core_list_join.f" included
    repeat
    r> drop 2drop ;
 
+: #iterate_secs  ( ud -- u )  \ seconds of iterations
+   start_time
+   iterate
+   stop_time
+   get_time time_in_secs ;
+
 \ find # iterations that lasts > 10sec
 : #iterations  ( -- ud )
-   1 0  \ iterations
+   1 s>d  \ iterations
    0  \ secs
    begin
       1 <
    while
          d2* d2* d2*  \ iteration *= 8
-         start_time
-         2dup iterate
-         stop_time
-         get_time time_in_secs
+         2dup #iterate_secs
    repeat
    get_time time_in_secs
    begin  \ iterations secs

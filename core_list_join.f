@@ -1,4 +1,27 @@
 
+\ Print info
+: .info  ( a-addr -- )
+   base @ swap hex
+   cell+ @
+   ." ["
+   dup @ $FFFF and 0 <# # # # # #> type
+   ." ,"
+   cell+ @ $FFFF and 0 <# # # # # #> type
+   ." ]"
+   base ! ;
+\ Print list
+: .list  ( a-addr -- )
+   begin
+      dup
+   while
+         dup .info
+         @
+   repeat
+   drop ;
+\ Print list_head
+: .list_head  ( a-addr -- )
+   @ .list ;
+
 \ ee_s16 calc_func(ee_s16 *pdata, core_results *res)
 : calc_func  ( a-addr -- n )
    dup @  \ &pdata data
@@ -50,14 +73,14 @@
    dup dataregen
    swap cell+ @
    dup dataregen
-   @ swap @ - ;  \ s16 is enough
+   @ swap @ u< ;  \ s16 is enough
 
 \ compare idx
 \ ee_s32 cmp_idx(list_data *a, list_data *b, core_results *res)
 : cmp_idx  ( a-addr1 a-addr2 -- n )  \ &elem_a &elem_b
    cell+ @
    swap cell+ @
-   @ swap @ - ;  \ s16 is enough
+   @ swap @ u< ;  \ s16 is enough
 
 \ Compare the data item in a list cell.
 \ Can be used by mergesort.
@@ -67,7 +90,7 @@
    cell+ @ cell+ calc_func
    swap
    cell+ @ cell+ calc_func
-   - ;  \ s16 is enough
+   u< ;  \ s16 is enough
 
 \  update tail to b and advance to next b
 : next_elem  ( a-addr1 a-addr2 a-addr3 -- a-addr3 a-addr2 a-addr4 )
@@ -82,10 +105,10 @@
       dup if
          over if
             2dup r@ execute
-            0> if
-               next_elem
-            else
+            if
                swap next_elem swap
+            else
+               next_elem
             then
          else
             next_elem
@@ -186,7 +209,7 @@
    dup list_new
    dup $7FFF $FFFF rot data!
    2dup list_insert  \ &elem &end_elem
-   rot 2/ 2/ cell / 3 -
+   rot 2/ 2/ 1 cells / 3 -
    r@ swap
    0 do  \ &elem &end_elem seed
       dup i xor $000F and
@@ -198,7 +221,7 @@
       2dup list_insert
       r>
    loop
-   2drop swap 2/ 2/ cell / 5 / >r  \ list R: size/5
+   2drop swap 2/ 2/ 1 cells / 5 / >r  \ list R: size/5
    1 over
    begin
       @ dup @
@@ -218,22 +241,6 @@
    r> r> 2drop
    r@ !
    r> ['] cmp_idx_dr core_list_mergesort ;
-
-\ Print list
-: .list  ( a-addr -- )
-   base @ swap hex
-   begin
-      @ dup
-   while
-         dup cell+ @
-         ." ["
-         dup @ $FFFF and 0 <# # # # # #> type
-         ." ,"
-         cell+ @ $FFFF and 0 <# # # # # #> type
-         ." ]"
-   repeat
-   drop
-   base ! ;
 
 : core_list_find_idx  ( x a-addr1 -- a-addr2|0 )
    begin
